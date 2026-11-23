@@ -2,6 +2,8 @@
 
 An end-to-end, explainable machine-learning portfolio project using the **Give Me Some Credit** dataset. The project estimates the probability of serious delinquency within two years, compares several classification approaches, combines tuned XGBoost and Random Forest models, selects a decision threshold using out-of-fold F2-score, and explains predictions with SHAP.
 
+> **Important:** This is a serious-delinquency / credit-default prediction project, not a fraud-detection project. The original notebook filename is retained for traceability.
+
 ## What is included
 
 - A Streamlit application with sidebar navigation — **all application code is in one `app.py` file**.
@@ -47,28 +49,65 @@ The raw dataset is **not included**. Obtain it from the original competition/dat
 - SHAP permutation explanations for global and individual predictions.
 - Streamlit deployment interface.
 
-### Final ensemble
+### Final ensemble and model selection
 
-The selected ensemble uses equal probability weights:
+The final probability ensemble combines the tuned XGBoost and Random Forest classifiers using equal weights:
 
-- XGBoost weight: 1
-- Random Forest weight: 1
-- Best tested OOF Average Precision for weight selection: **0.387872**
-
-### Threshold selection
-
-The selected threshold is **0.1834**, chosen by maximizing F2-score on out-of-fold training predictions. F2 gives recall more weight than precision, matching the project's stated priority of identifying more positive/default cases.
-
-| OOF threshold metric | Result |
+| Model | Ensemble weight |
 |---|---:|
-| Selected threshold | 0.1834 |
+| XGBoost | 1 |
+| Random Forest | 1 |
+
+The weights were compared using out-of-fold Average Precision. Equal weighting achieved the highest value among the tested combinations:
+
+| XGBoost : Random Forest | OOF Average Precision |
+|---|---:|
+| **1 : 1** | **0.387872** |
+| 2 : 1 | 0.387863 |
+| 3 : 1 | 0.387224 |
+| 1 : 2 | 0.385958 |
+| 1 : 3 | 0.384345 |
+
+### Model comparison visualizations
+
+The following figures are included in `assets/` and are displayed directly in this README. They provide a visual comparison of the evaluated models; consult the notebook for the exact experiment setup and metric calculations.
+
+#### Overall model performance comparison
+
+![Model performance comparison](assets/model_performance_comparison.png)
+
+#### ROC curves
+
+![ROC curves](assets/roc_curves.png)
+
+#### Precision-recall curves
+
+![Precision-recall curves](assets/precision_recall_curves.png)
+
+#### Multi-metric comparison
+
+![Multi-metric radar chart](assets/multi_metric_radar.png)
+
+#### Performance heatmap
+
+![Model performance heatmap](assets/performance_heatmap.png)
+
+### Threshold selection: prioritize recall using F2-score
+
+The selected classification threshold is **0.1834**, chosen by maximizing the F2-score on out-of-fold training predictions. F2 weights recall more heavily than precision, reflecting the project's preference to identify more borrowers who experience serious delinquency.
+
+| OOF threshold-selection metric | Result |
+|---|---:|
+| Selected threshold | **0.1834** |
 | Precision | 0.2451 |
-| Recall | 0.7164 |
-| F2-score | 0.5175 |
+| Recall | **0.7164** |
+| F2-score | **0.5175** |
+
+This threshold is a decision rule applied to predicted probabilities. It does not change the underlying probability estimates or the ranking measured by ROC-AUC and Average Precision.
 
 ### Held-out test results
 
-At the selected threshold of 0.1834:
+The notebook's reported held-out test metrics at the selected threshold are:
 
 | Metric | Held-out test result |
 |---|---:|
@@ -85,7 +124,23 @@ Confusion matrix (rows = actual, columns = predicted):
 | Actual non-default | 35,390 | 6,602 |
 | Actual default | 839 | 2,169 |
 
-The lower threshold increases recall compared with the default 0.50 cutoff, while also increasing false positives and lowering precision. This is an explicit operating-point trade-off, not a universal optimum for every lender or business.
+The lower threshold favors recall and therefore catches more positive cases, but it also increases false-positive classifications. This is an operating-point trade-off, not a universal optimum for every lender or business.
+
+### SHAP explainability visualizations
+
+SHAP is used to interpret the fitted ensemble's predictions. The plots below are global or example-level model explanations; they should not be interpreted as causal effects.
+
+#### Global feature impact (beeswarm)
+
+![SHAP beeswarm](assets/shap_beeswarm.png)
+
+#### Mean absolute SHAP feature importance
+
+![SHAP global feature importance](assets/shap_global_importance.png)
+
+#### Example individual prediction (waterfall)
+
+![SHAP waterfall](assets/shap_waterfall.png)
 
 ## Repository structure
 
@@ -166,10 +221,7 @@ Run `notebooks/Streamlit_Artifact_Export.ipynb` after loading the trained model 
 
 The companion notebook can also save precomputed global SHAP values. The app currently uses the supplied static global SHAP images for the Explainability page; the global pickle is not required for the normal app navigation.
 
-
 ## Methodological limitations and next steps
-
-This repository reproduces the supplied notebook and its reported results. It should not be presented as a production-validated credit scoring system.
 
 The notebook calculates clipping percentiles before the train/test split. This means the held-out feature distribution contributes to the clipping boundaries. Also, the hyperparameters are selected on the training set before the same training set is used to generate out-of-fold predictions for ensemble-weight and threshold selection. These choices can make reported validation estimates somewhat optimistic.
 
@@ -191,5 +243,4 @@ For a stronger next iteration:
 - Mean absolute SHAP values measure average contribution magnitude, not direction.
 - SHAP explanations describe the fitted model's behavior; they are not causal effects.
 - The classification threshold changes the predicted class, not the probability explained by SHAP.
-
 

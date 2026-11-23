@@ -2,8 +2,6 @@
 
 An end-to-end, explainable machine-learning portfolio project using the **Give Me Some Credit** dataset. The project estimates the probability of serious delinquency within two years, compares several classification approaches, combines tuned XGBoost and Random Forest models, selects a decision threshold using out-of-fold F2-score, and explains predictions with SHAP.
 
-> **Important:** This is a serious-delinquency / credit-default prediction project, not a fraud-detection project. The original notebook filename is retained for traceability.
-
 ## What is included
 
 - A Streamlit application with sidebar navigation — **all application code is in one `app.py` file**.
@@ -164,11 +162,10 @@ Run the final model-export cell in `Fraud Detection.ipynb`, then place `credit_r
 
 Run `notebooks/Streamlit_Artifact_Export.ipynb` after loading the trained model and the saved train/test data. It creates a representative training background sample and saves `shap_background.pkl`.
 
-### 3. `shap_global.pkl` — optional
+### 3. `shap_global.pkl`
 
 The companion notebook can also save precomputed global SHAP values. The app currently uses the supplied static global SHAP images for the Explainability page; the global pickle is not required for the normal app navigation.
 
-**Security note:** Joblib/pickle files can execute code when loaded. Only load artifacts you created yourself or obtained from a trusted source. Do not commit private customer records, credentials, or API keys.
 
 ## Methodological limitations and next steps
 
@@ -195,6 +192,4 @@ For a stronger next iteration:
 - SHAP explanations describe the fitted model's behavior; they are not causal effects.
 - The classification threshold changes the predicted class, not the probability explained by SHAP.
 
-## Disclaimer
 
-This is an educational portfolio project. It is not a validated lending decision system, does not establish creditworthiness, and must not be used as the sole basis for real lending or other consequential decisions.
